@@ -1,0 +1,155 @@
+% !TeX encoding = UTF-8
+
+% article example for classicthesis.sty
+\documentclass[11pt,a4paper]{scrartcl} % KOMA-Script article 
+\usepackage[nochapters,eulermath]{classicthesis} % nochapters
+\pdfoutput=1
+
+% Packages here
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage[left=1.5in,right=1.5in,top=1in,bottom=1in]{geometry}
+\usepackage[natbibapa]{apacite}
+\setcitestyle{notesep={, }}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily}
+\usepackage{fancyvrb}
+% \usepackage{gb4e}
+% % this next command fixes some bug in gb4e
+% \noautomath
+\usepackage{float}
+\usepackage{adjustbox}
+% \usepackage{tipa}
+\usepackage{amsmath}
+\usepackage{metrix}
+\usepackage{enumerate}
+% \usepackage{substitutefont} % alternative for stacking accents
+% \substitutefont{T3}{pplj}{cmr}
+\usepackage{covington} % for \twoaccent macro
+
+\newcommand{\bce}{\textsc{bce}\ }
+\newcommand{\ce}{\textsc{ce}\ }
+
+\newenvironment{myverb}{%
+ \VerbatimEnvironment
+ \begin{adjustbox}{max width=\linewidth}
+ \begin{BVerbatim}
+  }{
+  \end{BVerbatim}
+ \end{adjustbox}
+}
+
+\usepackage{etoolbox}
+\usepackage{setspace} % \onehalfspacing macros
+\AtBeginEnvironment{quote}{\singlespace\vspace{0.5em}\small}
+\AtEndEnvironment{quote}{\vspace{0.5em}\endsinglespace}
+\newcommand{\ictmacron}[1]{\twoacc[\'|\={#1}]}
+
+\begin{document}
+\title{\rmfamily\normalfont\textsc{Accent in Latin Hexameter Poetry}}
+\author{\phantom{xxx}\\\textsc{Ben Nagy}\\\small{\texttt{benjamin.nagy@adelaide.edu.au}}}
+\date{\normalsize{\today}}
+
+\maketitle
+
+\begin{abstract}
+\noindent As part of my statistical analysis of hexameter poetry, I was interested in analysing the interplay between metrical ictus and word accent. To this end, I wrote a short program that was able to automatically analyse pre-scanned text to determine the conflicts. To do this, it was first necessary to be able to correctly place the accent on any Latin word. While this seems simple, it was more complicated than it may appear. This short research summary aims to record and justify my approach.\\
+\phantom{xxx}\\
+\noindent\textit{Keywords: Latin, digital humanities, python}
+\end{abstract}
+
+\setlength{\parindent}{0pt}
+
+\section{Introduction}
+
+I have no choice but to assume, in this, a reasonable level of familiarity with the particular jargon of Latin poetry. I should, however, clarify how I am using the key terms. An \textit{ictus syllable} is one which begins a foot, and in dactylic hexameter is always long (this might also be referred to as the \textit{arsis}). The \textit{accent} of a Latin word, which some might call \textit{stress} is extra emphasis placed on a syllable. For our present purposes, I am not concerned at all with the distinction between a pitch accent or a stress accent, nor indeed the potential technical difference between the terms \textit{stress} and \textit{accent}, and will use them interchangeably. It suffices to know that multi-syllable Latin words bore one (and only one) primary accent. The rule for determining where the accent falls in a Latin word is, ostensibly, straightforward. In words of two syllables, the first is always stressed.%
+\footnote{This is, as we will see, a lie.}
+For words of more than two syllables, according to the `Law of the Penult', the \textit{penult} (second-to-last syllable) is stressed if long, and the \textit{antepenult} (third-to-last) otherwise. The rule, however, is not as universal as one might think. To conduct this research, it was necessary to automatically determine where, in a line of dactylic hexameter, the ictus fell in each foot, and whether or not that syllable was also stressed. It should, therefore, be no surprise that, in the course of making those determinations for tens of thousands of lines, there were some edge cases. For those edge cases, the algorithm had to be able to make an automatic decision. This section summarises the research that informed the final design of the algorithm. 
+{
+\section{Methods}
+
+The website \cite{mqdq} has a collection of most of the poetry in the Classical Latin corpus, which includes its metrical scansion. Those texts have now been made available for download in XML format, suitable for automatic analysis. All of my analysis is based on the MQDQ (XML) editions of the relevant works. In general, each line of hexameter was treated individually. The basic scansion of the lines is part of the MQDQ data format. Each word in a line is tagged with the syllables it contains, as well as a variety of extra metrical features. In particular, the MQDQ data marks elision (or \textit{synalepha}) diaeresis, prodelision and strong and weak caesurae. The syllables that make up a word are marked according to the feet in which they fall, and whether they are in the arsis or thesis---so \texttt{3T} is the thesis of the third foot.
+
+\begin{figure}[H]
+\centering
+\label{fig:linexml}
+\phantom{xxx}
+\begin{myverb}[fontsize=\small]
+<line name="1" metre="H" pattern="DDSS">
+    <word sy="1A1b" wb="CF">Arma</word>
+    <word sy="1c2A2b" wb="CF">uirumque</word>
+    <word sy="2c3A" wb="CM">cano,</word>
+    <word sy="3T4A" wb="CM">Troiae</word>
+    <word sy="4T" wb="DI">qui</word>
+    <word sy="5A5b" wb="CF">primus</word>
+    <word sy="5c" wb="DI">ab</word>
+    <word sy="6A6X">oris</word>
+</line>
+\end{myverb}
+\caption{Raw XML for a line from MQDQ}
+\end{figure}
+
+The calculation of word accent is not part of the MQDQ data, and was performed by my \texttt{mqdq-parser} code (a work-in-progress, open-source Python library available at \texttt{https://github.com/bnagy/mqdq-parser} (\cite{mqdq-parser})).
+
+\subsection{Feet or Words?}
+The first choice was whether to calculate conflict by foot, or by word. Based on the analysis in \cite{knight1931homodyne}, where he pays special attention to the fourth foot, it seems that traditional analysis has been based around feet (not words). This is more logical - every foot must have an ictus, and that syllable is either accented or it is not. If the analysis were carried out with respect to words, then a given word might not contain an ictus and so the metric would not apply. Classifying the harmony by foot means that, in every line, we have exactly six places where ictus and accent may (or may not) coincide. Knight calls feet in which the ictus and accent fall on the same syllable \textit{homodyne}, and the feet in which they do not \textit{heterodyne}. Although this terminology is not particularly satisfactory, it has the benefit of being compact, and I will adopt it from this point forward.
+\newpage
+\subsection{Handling Clitics}
+
+The first question that arises is how to handle words with clitics (-que, -ve, -ne etc.). For example, \textit{c\twoacc[\'|\u{a}].n\=o} is stressed on the first syllable (according to the Law of the Penult), but what about \textit{c\v a.n\=o.qu\v e}? This is covered in Allen's landmark \textit {Vox Latina} \cite[87]{sidney1965vox}:
+\begin{quote}
+When an enclitic (\textit{-que, -ue, -ne, -ce}) was added to a main word, the resulting combination formed a new word-like group, and a shift of accent was therefore to be expected in some cases: thus, for example, \textit{v\'irum} but \textit{vir\'umque} (like \textit{rel\'inquo}). Such a shift is discussed by many of the grammarians [\textellipsis]
+\end{quote}
+Allen then refers us to the excellent work by \cite{schoell}, \textit{De Accentu Linguae Latinae}, in which ``the majority of the ancient observations on the Latin accent are collated". However, as he discusses, the grammarians seem to have over-zealously created a new rule whereby the accent \textit{always} moved to the penult in the presence of an enclitic. This, he notes, this does not seem to be correct, ``supported by the fact that such combinations are commonly found in the fifth foot of hexameters, where we expect agreement between ictus and accent" \cite[87]{sidney1965vox}. How commonly? I find 1037 instances in Verg. \textit{Aen}. of a word in the fifth foot, ending with \textit{-que}, where the arsis falls on a long penult (\textit{p\=ugn\ictmacron{a}squ\v e}, \textit{s\=acr\ictmacron{u}mqu\v e} etc). If we did not already know it, this would certainly convince us of the fact that the \textit{-que} clitic causes the word accent to move. However, I also find 111 instance of words in the fifth foot like \textit{\= alt\v aqu\v e}, \textit{\=act\v aqu\v e}, \textit{\=oss\v aqu\v e} which have a light penult. While I am not sure that 111 lines from $\sim$10,000 comprise a `common' pattern, I am inclined to agree with Allen that the accent here is very likely to fall on the antepenult (\textit{\ictmacron{a}lt\v aqu\v e}), not the penult---\textit{pace} Varro, Capella \textit{et cetera}. With these assumptions, I find only 127 lines (of 9840 uncorrupted lines in the MQDQ edition) with a heterodyne fifth foot. Interestingly, many of them end with five syllable words like \textit{Pirithoumque} or \textit{quadrupedantum} which begin on the arsis of the fifth foot. Linguistically, there are good reasons to suspect that long words like these would carry a secondary stress, which would naturally fall on the first syllable, making these fifth and sixth feet `almost' homodyne (\textit{qu\H adruped\'antum}). This could be an interesting addition to the arguments in favour of a secondary word stress.
+
+\subsection{Handling Elision}
+
+While the grammarians collected by Schoell are full of advice about the pronunciation of \textit{p\'one} versus \textit{pon\'e},%
+\footnote{This (potential) difference in pronunciation is mentioned in no less than twenty passages.} they are entirely silent on the matter of elision. Of the several hundred excerpts, I could not find a single one that considered the question of whether elision, by changing the number of syllables in a word, moves the accent. This, in itself, seems to be evidence for the fact that nothing happens---in other words, that the accent does not move when elision occurs. The situation is made more complicated, however, by the fact that we can't simply look at some examples and ``figure it out''. Consider, for example, this line from Verg. \textit{Aen} (3.658):
+
+\vspace{0.2em}
+\begin{center}
+\metrics{_ _ ' _ _ ' _ _ ' _ _ ' _ u u ' _ x}
+        {Monstru-\bow{m h}or-rendu-\bow{m i}n-form-\bow{e i}n-gens cui lu-men ad-emp-tum}
+\end{center}
+
+Vergil uses this singular metre, with the drag and thud of three spondaic elisions, to add an extra dimension to his description of Polyphemus. In such an unusual hexameter line, it is not, I claim, entirely obvious where the words should be stressed. Buoyed by the success of the previous approach (examining the fifth feet in hexameters), I hoped that we could do something similar, but elisions in the fifth foot are rare. Of the 9840 lines of the \textit{Aeneid}, there are 132 lines where the word containing the arsis of the fifth foot has an elision. Ovid is even more particular---in 12009 lines of the \textit{Metamorphoses} we find just 66. With so little data, it seems dangerous to draw conclusions---could these lines not simply be heterodyne in the fifth foot? After all, we know that that `rule' is not universally applied. Nevertheless, by manual inspection, there do seem to be patterns in Vergil which suggest that he intended most of them to harmonise. A few examples should suffice. If we make the assumption that the accent does not move with elision, there are several lines which would end with a `normal' bucolic diaeresis: \textit{\textellipsis cr\'\i min(e) ab \'uno} (\textit{Aen.} 2.65), \textit{\textellipsis s\'anguin(e) et \'\i gni} (\textit{Aen.} 2.210), \textit{\textellipsis l\'\i tor(e) ab \'omni} (\textit{Aen.} 5.43). However, another `rule' seems to be that if a clitic is elided, the accent returns to its normal position. This is seen in several lines with a sixth foot disyllable and a (presumably) stressed fifth foot arsis: \textit{\textellipsis fat\'aliaqu(e) \'arva} (\textit{Aen.} 5.82), \textit{\textellipsis spum\'antiaqu(e) \'addit} (\textit{Aen.} 5.187) \textit{\textellipsis \'abditaqu(e) \'\i ntus} (\textit{Aen.}  9.579). These cases, though, all involved elision after breves. Elision after a long syllable is even rarer. For that, I decided, in the end, to leave the stress where it was; but I acknowledge the paucity of data. There are only four lines of the \textit{Aeneid} with an elision after the arsis of the fifth foot that do \textit{not} involve \textit{-que}. One is \textit{Aen.} 3.164:
+\vspace{0.2em}
+\begin{center}
+\metrics{_ u u ' _ u u ' _ _ ' _ u u ' _ u u ' _ x}
+        {Nom-i-n\bow{e A}ch-ae-men-i-des, Troi-am gen-i-tor-\bow{e A}d-a-mas-to}
+\end{center}
+If this line is one of the extremely rare%
+\footnote{As noted above, there are 127 in Verg. \textit{Aen.} although reasoning by this count is slightly circular logic.}
+occurrences of fifth foot heterodyne, I can find no poetic reason for it, other than the minor difficulty of wrangling `Achaemenides'---surely routine for a poet like Vergil. I choose instead to believe that \textit{genit\'or(e)} retains its stress on what has become its final syllable. With these slight clues, and based on the absence of any discussion by the ancient grammarians, I implemented elision with two simple rules: if a word with elision ends with a long syllable, that syllable is stressed. If it ends with a breve, then the word is stressed exactly as if it were a 'normal' word according to the remaining syllables. In particular, an elided clitic is not restored when determining stress. As a very final point, if my approach finds no support (nor any disagreement) in the ancient sources, I seem at the least to be in accord with \cite[68]{westaway}, whom \cite[186 n. 1]{knight1931homodyne} cites as an authority:
+\begin{quote}
+[under `Subsidiary Rules']
+\begin{enumerate}[(1)]\setcounter{enumi}{1}
+    \item Sometimes a final syllable following a long penult is lost, or there is a contraction. In such cases the accent is retained on the syllable which has become final.
+\end{enumerate}
+\end{quote}
+
+\subsection{Exceptions and Special Cases}
+
+There are several remaining exceptions and special cases notes by \cite[87]{sidney1965vox}, some of which I have implemented, and some not. The first two classes are these:
+\begin{quote}
+In some words, originally accented on the penultimate, the vowel of the final syllable has been lost; and the accent then remains on what is now the final syllable. Thus, for example, \textit{nostr\ictmacron{a}s, ill\ictmacron{\i}c, adh\ictmacron{u}c, add\ictmacron{u}c, tant\ictmacron{o}n} (from \textit{nostr\ictmacron{a}tis, ill\ictmacron{\i}ce, adh\ictmacron{u}ce, add\ictmacron{u}ce, tant\ictmacron{o}ne}). The same applies to contracted perfect forms in \textit{-\ictmacron{a}t, -\ictmacron{\i}t}, from \textit{-\ictmacron{a}vit, -\ictmacron{\i}uit} [\textellipsis]
+\end{quote}
+The first group of words were easy enough to add as special cases, although it should be noted that they are extremely rare in Verg. \textit{Aen.} (\textit{nostras} occurs just four times). The contracted perfect forms, however, were not considered. To be able to detect these forms, as opposed to the many, much more common, forms that end with \textit{-at} or \textit{-it}, would require an automatic parser with a level of accuracy and sophistication that does not yet exist.\\
+
+The final group of exceptions that were implemented are a small set of conjunctions. Allen notes merely that "certain conjunctions were unaccented, e.g. \textit{at, et, sed, igitur}" \cite[88]{sidney1965vox}, but refers us to Schoell for the details. I followed the broad consensus, summed up in this excerpt from \textit{Mus. Rhen.} 8 \cite[194]{schoell}:
+\begin{quote}
+Copulativae et disiunctivae prope omnes gravantur, expletivae plures fastigia retinent, causales autem et rationales quaedam cum fastigiis, alias gravi accentu deprimuntur. quaedam in pronuntione deprehendes.
+\\
+\\
+Copulative and disjunctive [conjunctions] are almost all lowered [unaccented], most expletives retain their fastigia [accent marks], however some causals and conclusives are with fastigia, others are lowered by a grave accent. Some you will discover as you pronounce them.
+\end{quote}
+With this in mind, I produced the following list, comprising conjunctions, disjunctions, \textit{igitur} (from Allen) and some others of one syllable: \textit{at, ac, atque, et, sed, igitur, vel, aut, iam, seu, nam}. In some cases, polysyllabic conjunctions are suggested by the grammarians (\textit{quoniam, etenim, sedenim}), but I have not marked them as unaccented. It seems to me, in those cases, wiser to err on the side of caution. After all, we have already seen from our exploration of \textit{-que} that the early grammarians are not fully authoritative. The final category that should be mentioned are a group of prepositions which, per Allen and Schoell, may have changed their accentuation depending on whether they appeared before or after the relevant noun. Once again, detecting these automatically would be beyond our present level of parsing technology.
+\newpage
+\subsection{Replicating Knight}
+
+It is difficult to convincingly assess the `accuracy' of my final accentuation algorithm. Fortunately, however, there is at least one point of comparison---in Knight's \textit{Homodyne in the fourth foot of the Vergilian Hexameter}. He informs us that ``[f]ourth-foot homodyne is by comparison rare in Vergil, but not very rare. The percentage of it to the total number of lines in the \textit{Aeneid} is 35.95 per cent" \cite[186]{knight1931homodyne}. Using my algorithm, I detect fourth-foot homodyne in 3507 lines (of 9840), which is 35.65\%. The difference in our percentages represents about 30 lines on which we disagree. Knight also lists some percentages by individual books. For \textit{Aen.} 1, he has 28.61\% while I have 28.82\%; \textit{Aen.} 8, 39.97\% to my 39.29\%; \textit{Aen.} 10, 32.59\% vs 32.71\%. While Knight does not share with us his methodology for scanning and tabulating the entire \textit{Aeneid} in the 1930s (perhaps it was a long winter), he does mention that he performed ``two computations, in which different texts were used and different conventions followed" and that his figures varied by only 0.45\% \cite[186 n. 1]{knight1931homodyne}. Based on this, it seems reasonable to trust my own figures, certainly for performing bulk statistical analysis, although it might be wise to verify the calculation for small passages by hand.
+\newpage
+\bibliographystyle{apacite}
+\bibliography{silius_metre}
+\end{document}
