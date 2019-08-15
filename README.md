@@ -1,6 +1,8 @@
 # hexml-paper
 
-LaTeX and figures for the paper 'Metre as a stylometric feature for Latin hexameter poetry'
+LaTeX and figures for the paper 'Metre as a stylometric feature for Latin hexameter poetry'.
+
+[the_paper.pdf](The paper) is here.
 
 Also included: a Jupyter notebook to reproduce all of the figures and tables in [repro/](repro). You will need to `pip install MQDQParser` before you can play along.
 
