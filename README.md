@@ -2,7 +2,7 @@
 
 LaTeX and figures for the paper 'Metre as a stylometric feature for Latin hexameter poetry'.
 
-This article has been accepted for publication in Digital Scholarship in the Humanities, published by Oxford University Press.
+This article has been accepted for publication in [Digital Scholarship in the Humanities](https://academic.oup.com/dsh), published by Oxford University Press.
 
 NB: The commit messages about 'reviewer feedback' refer to internal institutional review, NOT academic peer review by the journal. This is a pre-print, and contains none of the revisions suggested by the journal reviewers. A link to the DOI for the post-print paper will appear here in due course.
 
