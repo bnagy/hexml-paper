@@ -33,6 +33,9 @@
 \usepackage{covington} % for \twoaccent macro
 \usepackage[super]{nth} % easy 15th etc
 
+% to use UTF characters without weirdness
+\usepackage[utf8]{inputenc}
+
 \newcommand{\bce}{\textsc{bce}\ }
 \newcommand{\ce}{\textsc{ce}\ }
 \renewcommand\textbullet{\ensuremath{\bullet}}
@@ -53,7 +56,7 @@
 \AtEndEnvironment{quote}{\vspace{0.5em}\endsinglespace}
 \newcommand{\ictmacron}[1]{\twoacc[\'|\={#1}]}
 
-\pagenumbering{gobble}
+%\pagenumbering{gobble}
 
 \addtolength{\textfloatsep}{-0.2in}
 \begin{document}
@@ -286,7 +289,7 @@ The clearest conclusion from this research is that metrical features are an extr
 
 In the authorship attribution test, the chosen metric was the Mahalanobis distance, which is designed to correct for the issues of correlation and co-variance. As was shown, the Mahalanobis distance has two other desirable features. First, it can be used directly to calculate a $p$-value, which provides a well understood difference indicator. Second, during the calculation of the Mahalanobis distance, it is possible to extract a \textit{feature contribution vector}, which seems to have useful explanatory properties (Table \ref{fig:addit_feat_comp})---this allows us to `bridge the gap' between opaque computational methods and traditional philology. To the best of my knowledge, this feature contribution vector has not been discussed in the stylometry literature. Based on this technique I analysed the disputed Aldine Additamentum in the \textit{Punica} by Silius Italicus. Here there were some important differences in methodology; the most noteworthy is that a target distribution was created through random sampling with replacement. These large sample distributions provided distance measurements that minimised variation due the random process. The results appear to support those scholars who claim that the work is not genuine. With a $p$-value of 0.0013, the Additamentum differs, metrically, from the style of the rest of the poem in a statistically significant way. For comparison, I examined the rest of the poem using a rolling window and found only six passages (of 446) with higher $M^{2}$ distances.%
 \footnote{See Appendix, Table \ref{fig:weird_chunks} for a more detailed analysis of these passages.}
-Although this authorship result is certainly tendentious, more research should be conducted using orthogonal methodologies before it could be considered to be a substantial claim.
+Although this authorship result is certainly promising, more research should be conducted using orthogonal methodologies before it could be considered to be a substantial claim.
 \newpage
 \bibliographystyle{apacite}
 \bibliography{sil2}
